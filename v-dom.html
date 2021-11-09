@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>VDOM</title>
+    <style>
+        body {
+            margin: 10;
+        }
+
+        .hello {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="vdom">
+
+    </div>
+
+    <script>
+
+        // Create virtual node
+        function h(tag, props, children) {
+            // Return the virtual node
+
+            return {
+                tag,
+                props,
+                children
+            }
+        }
+
+        // Mount a virtual node to the DOM
+        function mount(vnode, container) {
+            const el = (vnode.el = document.createElement(vnode.tag))
+            for (const key in vnode.props) {
+                el.setAttribute(key, vnode.props[key])
+            }
+
+            if (typeof vnode.children == "string") {
+                el.textContent = vnode.children
+            }
+            else {
+
+                vnode.children.forEach(element => {
+                    mount(element, el)
+                });
+            }
+            // Create the element
+            // Set props
+            // Handle children
+            // Mount to the DOM
+
+            container.appendChild(el)
+
+            return el;
+
+        }
+
+        // Unmount a virtual node from the DOM
+        function unmount(vnode) {
+
+            vnode.el.parentNode.removeChild(vnode.el)
+
+            // Unmount the virtual node
+        }
+
+        // Take 2 vnodes, compare & figure out what's the difference
+        function patch(n1, n2) {
+
+            const el = n2.el = n1.el
+            // Case where the nodes are of different tags
+            if (n1.tag !== n2.tag) {
+                mount(n2, el.parentNode)
+                unmount(n1)
+
+            }
+            else {
+
+                // Case where the nodes are of the same tag
+
+
+                // Case where the new vnode has string children
+                if (typeof n2.children === "string") {
+                    el.textContent = n2.children;
+                    return
+                }
+
+                // Case where the new vnode has an array of vnodes
+                if (Array.isArray(n1.children) && Array.isArray(n2.children)) {
+                    const c1 = n1.children
+                    const c2 = n2.children
+                    const commonLength = Math.min(c1.length, c2.length)
+                    for (let i = 0; i < commonLength; i++) {
+                        patch(c1[i], c2[i])
+                    }
+
+
+                    if (c1.length > c2.length) {
+                        c1.slice(c2.length).forEach(child => {
+                            unmount(child)
+                        })
+                    }
+
+                    if (c1.length < c2.length) {
+                        c2.slice(c1.length).forEach(child => {
+                            mount(child, el)
+                        })
+                    }
+
+                }
+
+
+
+            }
+
+        }
+
+        // Create virtual nodes & render them below this line...
+
+
+
+        const ul = h('ul', { class: 'hello' }, [
+            h('li', { class: 'hello' }, 'Hi'),
+            h('li', { class: 'hello' }, 'This is the exmple of'),
+            h('li', { class: 'hello' }, 'VDOM')
+
+        ])
+
+
+        const ul2 = h('ul', { class: 'hello' }, [
+            h('li', { class: 'hello' }, 'Hi, Everyone'),
+
+
+        ])
+
+
+        const span = h('span', { class: 'hello' },
+            'This is the example of VDOM ...stay..tuned'
+
+        )
+
+        mount(ul, document.getElementById('vdom'))
+
+
+        setTimeout(() => {
+            patch(ul, span)
+
+        }, 5000)
+
+
+
+
+
+
+    </script>
+</body>
+
+</html>
